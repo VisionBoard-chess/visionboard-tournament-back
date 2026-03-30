@@ -1,0 +1,87 @@
+package com.example.services
+
+import com.example.repositories.RoundRepository
+import com.example.models.*
+import com.example.repositories.TournamentRepository
+import java.time.LocalDateTime
+import java.util.UUID
+
+class RoundService(
+    private val roundRepo: RoundRepository,
+    private val tournamentRepo: TournamentRepository,
+    private val gameService: GameService,
+    private val lichessService: LichessService
+) {
+    suspend fun createRound(tournamentId: String, request: RoundRequest): RoundResponse {
+        if (roundRepo.existsByTournamentAndNumber(tournamentId, request.roundNumber)) {
+            throw IllegalArgumentException("Round number ${request.roundNumber} already exists for tournament $tournamentId")
+        }
+        val lichessBroadcastId = tournamentRepo.findById(tournamentId)?.lichessBroadcastId
+            ?: throw IllegalArgumentException("Tournament not found")
+        val lichessRoundId = lichessService.createRound(lichessBroadcastId, request.name)
+        val tournamentName = tournamentRepo.findById(tournamentId)?.name
+        val round = Round(
+            roundId = UUID.randomUUID().toString(),
+            tournamentId = tournamentId,
+            name = request.name,
+            roundNumber = request.roundNumber,
+            pgn = "", // Placeholder, se actualizará después de crear el round en Lichess
+            lichessRoundId = lichessRoundId,
+            status = "NOT_STARTED",
+            startDate = request.startDate?.let { LocalDateTime.parse(it) }
+        )
+        roundRepo.createRound(round)
+
+        val games = request.games.map {
+            val header = "[Event \"${tournamentName}\"]\n" +
+                    "[Round \"${request.name + " " + request.roundNumber}\"]\n" +
+                    "[White \"${it.white}\"]\n" +
+                    "[Black \"${it.black}\"]"
+            gameService.createGame(round.roundId, it, header)
+        }
+        val pgn = games.joinToString("\n\n"){it.pgn}
+        roundRepo.updatePGN(round.roundId, pgn)
+        lichessService.pushRoundPgn(lichessRoundId,pgn)
+        return toResponse(round, games)
+    }
+
+    suspend fun getRoundsByTournamentId(tournamentId: String): List<RoundResponse> {
+        return roundRepo.findByTournamentId(tournamentId).map {round ->
+            val games = gameService.getGamesByRoundId(round.roundId)
+            toResponse(round, games)
+        }
+    }
+
+    suspend fun getRoundById(roundId: String): RoundResponse? {
+        val round = roundRepo.findById(roundId) ?: return null
+        val games = gameService.getGamesByRoundId(roundId)
+        return toResponse(round, games)
+
+    }
+
+    suspend fun syncRoundPgnFromGames(roundId: String): Boolean? {
+        val games = gameService.getGamesByRoundId(roundId)
+        val pgn = games.joinToString("\n\n") {it.pgn}
+        return updatePGN(roundId, pgn)
+    }
+
+    suspend fun updatePGN(roundId: String, pgn: String): Boolean? {
+        val round = roundRepo.findById(roundId) ?: return null
+        val lichessRoundId = round.lichessRoundId
+        val success = roundRepo.updatePGN(roundId, pgn)
+        if (success) {
+            lichessService.pushRoundPgn(lichessRoundId, pgn)
+        }
+        return success
+    }
+
+    private fun toResponse(round: Round, games: List<GameResponse> = emptyList()): RoundResponse = RoundResponse(
+        roundId = round.roundId,
+        tournamentId = round.tournamentId,
+        name = round.name,
+        roundNumber = round.roundNumber,
+        status = round.status,
+        startDate = round.startDate?.toString(),
+        games = games
+    )
+}
