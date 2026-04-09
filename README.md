@@ -1,4 +1,12 @@
-# visualboard-tournament-back
+# VisualBoard Tournament Server
+
+This is a backend server for the VisualBoard Tournament application. It provides RESTful APIs to manage tournaments, and matches. 
+The server is built using Ktor, a Kotlin framework for building asynchronous servers.
+
+The server uses a PostgreSQL database to store data, and the Exposed library to interact with the database. 
+The server also includes CORS support to allow cross-origin requests from the frontend application.
+
+## For the creation of this project, we used the following Ktor features:
 
 This project was created using the [Ktor Project Generator](https://start.ktor.io).
 

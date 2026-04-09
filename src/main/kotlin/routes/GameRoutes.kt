@@ -1,29 +1,31 @@
 package com.example.routes
 
-import com.example.models.Game
-import com.example.models.GameRequest
-import com.example.repositories.GameRepository
+
 import com.example.services.GameService
 import com.example.services.RoundService
 import com.example.tables.GameTable.gameId
 import io.ktor.http.*
-import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import io.ktor.server.sse.sse
-import io.ktor.server.websocket.*
-import io.ktor.websocket.*
-import io.ktor.sse.*
-import kotlinx.coroutines.channels.consumeEach
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
-
+/**
+ * Configures the endpoints related to the management of games corresponding to each round.
+ *
+ * Will expose these endpoints under the base path `/games`:
+ * - `GET /tournament/{accessCode}` : Retrieves the active games associated with a tournament's access code (useful for physical boards connection).
+ * - `GET /{gameId}` : Retrieves the details and state (including the PGN) of a specific game by its ID.
+ * - `PUT /{gameId}/pgn` : Updates the complete PGN of a game, triggering Lichess synchronization through the round service.
+ * - `PUT /{gameId}/move/edit` : Edits a specific move in the PGN based on its move index.
+ * - `PUT /{gameId}/move/add` : Adds a new move in SAN notation to the end of the game's PGN.
+ * - `GET /{gameId}/sse` : Establishes a Server-Sent Events (SSE) connection that streams updates whenever the game's PGN changes.
+ *
+ * @param gameService Instance of [GameService] responsible for CRUD operations and direct PGN manipulations for games.
+ * @param roundService Instance of [RoundService] responsible for coordinating Lichess synchronization when PGN changes are detected.
+ */
 val gameSubscribers = ConcurrentHashMap<String, CopyOnWriteArraySet<kotlinx.coroutines.channels.Channel<String>>>()
 
 fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
@@ -37,7 +39,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             call.respond(HttpStatusCode.OK, games)
         }
 
-        get("/round/{roundId}"){ //esto creo que tampoco se usa
+        get("/round/{roundId}"){
             val roundId = call.parameters["roundId"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing round ID")
             println(">>> GET /games/round/$roundId")
@@ -56,22 +58,6 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             call.respond(HttpStatusCode.OK, game)
         }
 
-        post("/round/{roundId}") { //esto no sirve (nadie va a llamar a este endpoint)
-            val roundId = call.parameters["roundId"]
-                ?: return@post call.respond(HttpStatusCode.BadRequest, "Missing round ID")
-            val request = call.receive<GameRequest>()
-            println(">>> POST /games/round/$roundId - Request recibido: $request")
-            val today = LocalDateTime.now()
-            val formatted = today.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-            val header = "[Event \"Casual Game\"]\n" +
-                    "[Date \"${formatted}\"]\n" +
-                    "[White \"${request.white}\"]\n" +
-                    "[Black \"${request.black}\"]"
-            val game = gameService.createGame(roundId, request, header)
-            println(">>> Juego creado: $game")
-            call.respond(HttpStatusCode.Created, game)
-        }
-
         put("/{gameId}/pgn") {
             val gameId = call.parameters["gameId"]
                 ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing game ID")
@@ -83,11 +69,12 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             if (success) {
                 val game = gameService.getGameByIdServerResponse(gameId)
                     ?: return@put call.respond(HttpStatusCode.NotFound, "Game not found after PGN update")
-                roundService.syncRoundPgnFromGames(game.roundId)
+                val sync = roundService.syncRoundPgnFromGames(game.roundId)
+                println(">>> Updated on Lichess sync: $sync ")
                 println(">>> PGN actualizado para juego $gameId")
                 gameSubscribers[gameId]?.forEach { channel ->
                     channel.trySend(Json.encodeToString(
-                        mapOf("type" to "pgn_update", "newPgn" to game?.pgn)
+                        mapOf("type" to "pgn_update", "newPgn" to game.pgn)
                     ))
                 }
                 call.respond(HttpStatusCode.OK, "PGN updated successfully")

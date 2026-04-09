@@ -9,6 +9,18 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
+/**
+ * Configures the endpoints related to the management of rounds within a tournament.
+ *
+ * Will expose these endpoints under the base path `/tournaments/{tournamentId}/rounds`:
+ * - `POST /` : Creates and adds a new round (along with its games) to the specified tournament.
+ * - `GET /` : Retrieves all rounds associated with a specific tournament.
+ * - `GET /next-round-number` : Calculates and returns the next available round number for creation.
+ * - `GET /{roundId}` : Gets the details of a specific round.
+ *
+ * @param roundService Instance of [RoundService] in charge of business logic and persistence for rounds.
+ * @param tournamentService Instance of [TournamentService] used to validate the existence of the associated tournament.
+ */
 fun Route.roundRoutes(roundService: RoundService, tournamentService: TournamentService) {
 
     route("/tournaments/{tournamentId}/rounds") {

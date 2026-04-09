@@ -10,6 +10,19 @@ import io.ktor.server.routing.*
 import kotlin.collections.get
 import kotlin.text.get
 
+/**
+ * Configures the endpoints related with the management of the tournaments.
+ *
+ * Will expose these endpoints:
+ * - `POST /tournaments` : Creates new tournament.
+ * - `GET /tournaments` : Gets all the tournaments opened and accessible.
+ * - `GET /tournaments/{tournamentId}` : Gets the information of a specific tournament.
+ * - `DELETE /tournaments/{tournamentId}` : Deletes a tournament using his ID.
+ * - `GET /tournaments/creator/{creatorId}` : Gets all the tournament of a user.
+ *
+ * @param service Instance of [TournamentService] in charge of business logic and database for tournaments.
+ *
+ */
 fun Route.tournamentRoutes(service: TournamentService) {
     route("/tournaments") {
         post {
