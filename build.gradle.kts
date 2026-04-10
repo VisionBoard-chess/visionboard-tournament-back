@@ -1,4 +1,5 @@
 import com.google.protobuf.gradle.*
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 val exposed_version: String by project
 val h2_version: String by project
 val kotlin_version: String by project
@@ -74,4 +75,8 @@ protobuf {
             it.builtins { id("kotlin") }
         }
     }
+}
+
+tasks.withType<ShadowJar>{
+    mergeServiceFiles()
 }
