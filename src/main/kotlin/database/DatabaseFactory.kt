@@ -8,12 +8,12 @@ import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DatabaseFactory {
-    fun init(): Database {
+    fun init(dbUrl: String, dbUser: String, dbPassword: String): Database {
         val database = Database.connect(
-            "jdbc:postgresql://localhost:5432/postgres",
+            dbUrl,
             driver = "org.postgresql.Driver",
-            user = "postgres",
-            password = "7045"
+            user = dbUser,
+            password = dbPassword
         )
         transaction(database) {
             SchemaUtils.create(TournamentTable)

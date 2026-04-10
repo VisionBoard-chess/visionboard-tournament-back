@@ -19,7 +19,12 @@ import io.ktor.server.routing.*
 
 fun Application.configureDatabases() {
     val lichessToken = environment.config.property("lichess.token").getString()
-    DatabaseFactory.init()
+
+    val dbUrl = environment.config.property("postgres.url").getString()
+    val dbUser = environment.config.property("postgres.user").getString()
+    val dbPassword = environment.config.property("postgres.password").getString()
+
+    DatabaseFactory.init(dbUrl, dbUser, dbPassword)
 
     val lichessService = LichessService(lichessToken)
     val tournamentService = TournamentService(TournamentRepository(), lichessService)
