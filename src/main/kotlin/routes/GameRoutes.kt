@@ -85,9 +85,9 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
         }
 
         put("/{gameId}/move/edit") {
-            println(">>> PUT /games/$gameId/move/edit")
             val gameId = call.parameters["gameId"]
                 ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing game ID")
+            println(">>> PUT /games/$gameId/move/edit")
             val body = call.receive<Map<String, String>>()
             val moveIndex = body["moveIndex"]?.toIntOrNull()
                 ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing or invalid moveIndex")

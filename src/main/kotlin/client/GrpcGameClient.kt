@@ -27,10 +27,23 @@ class GrpcGameClient(host: String = "localhost", port: Int = 50051) {
         }
 
         var success = false
-        stub.editGame(requestFlow).collect{response ->
-            when{
-                response.hasEditResult() -> success = response.editResult.success
+        try {
+            println(">>> [gRPC Client] Intentando enviar editMove a $gameId...")
+            stub.editGame(requestFlow).collect { response ->
+                println(">>> [gRPC Client] Respuesta recibida de Python: $response")
+                when {
+                    response.hasEditResult() -> {
+                        success = response.editResult.success
+                        println(">>> [gRPC Client] editResult.success = $success (Mensaje: ${response.editResult.message})")
+                    }
+                    response.hasMovesList() -> {
+                        println(">>> [gRPC Client] movesList devuelto: ${response.movesList.movesList}")
+                    }
+                }
             }
+        } catch (e: Exception) {
+            println(">>> [gRPC Client] EXCEPCIÓN DE RED AL HABLAR CON PYTHON:")
+            e.printStackTrace()
         }
         return success
     }

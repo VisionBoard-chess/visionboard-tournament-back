@@ -14,6 +14,7 @@ class GameRepository {
     suspend fun getGamesByRoundId(roundId: String): List<GameResponse> = dbQuery {
         GameTable.selectAll()
             .where { GameTable.roundId eq roundId }
+            .orderBy(GameTable.tableNumber to SortOrder.ASC)
             .map { rowToGame(it) }
     }
 
@@ -28,6 +29,7 @@ class GameRepository {
 
         GameTable.selectAll()
             .where { GameTable.roundId eq activeRound[RoundTable.roundId] }
+            .orderBy(GameTable.tableNumber to SortOrder.ASC)
             .map { rowToGame(it) }
     }
 
