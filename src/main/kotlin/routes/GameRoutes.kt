@@ -1,6 +1,8 @@
 package com.example.routes
 
 
+import com.example.models.IndividualGameRequest
+import com.example.models.TournamentRequest
 import com.example.services.GameService
 import com.example.services.RoundService
 import com.example.tables.GameTable.gameId
@@ -52,7 +54,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             val gameId = call.parameters["gameId"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing game ID")
             println(">>> GET /games/$gameId")
-            val game = gameService.getGameById(gameId)
+            val game = gameService.getTournamentGameById(gameId)
                 ?: return@get call.respond(HttpStatusCode.NotFound, "Game not found")
             println(">>> Juego encontrado: $game")
             call.respond(HttpStatusCode.OK, game)
@@ -113,7 +115,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
         get("/{gameId}/sse"){
             val gameId = call.parameters["gameId"]
                 ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing game ID")
-            val game = gameService.getGameById(gameId)
+            val game = gameService.getTournamentGameById(gameId)
                 ?: return@get call.respond(HttpStatusCode.NotFound, "Game not found")
             println(">>> GET /games/$gameId/sse")
 
@@ -141,6 +143,37 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             }
 
         }
+        get("/user/{userId}"){
+            println(">>> GET /games/user/{userId}")
+            val userId = call.parameters["userId"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing user ID")
+            val games = gameService.getGamesByUserId(userId.toInt())
+            println("$games")
+            call.respond(HttpStatusCode.OK, games)
+        }
+        post("/individual/create"){
+            println(">>> POST /games/individual")
+            val request = call.receive<IndividualGameRequest>()
+            println(">>> Request recibido: $request")
+            val individualGame = gameService.createIndividualGame(request)
+            call.respond(HttpStatusCode.OK, individualGame)
+        }
+        put("/{gameId}/pgn/individual"){
+            val gameId = call.parameters["gameId"] ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing gameId")
+            val pgnUpdate = call.receive<Map<String, String>>()
+            val newPgn = pgnUpdate["pgn"] ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing pgn")
+            val success = gameService.updatePGN(gameId, newPgn)
+            if(success) call.respond(HttpStatusCode.OK, "PGN updated successfully")
+            else call.respond(HttpStatusCode.NotFound, "Game not found")
+        }
+        put("/{gameId}/result/individual"){
+            val gameId = call.parameters["gameId"] ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing gameId")
+            val request = call.receive<Map<String, String>>()
+            val result = request["result"] ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing result")
+            val success = gameService.updateResult(gameId, result)
+            if(success) call.respond(HttpStatusCode.OK, "Individual updated successfully")
+            else call.respond(HttpStatusCode.NotFound, "Game not found")
+        }
         /* Mirar el WebSocket para enviar los cambios recurrentes del pgn, ya sea por deteccion o por edición o addición
         webSocket("/{gameId}/ws"){
             val gameId = call.parameters["gameId"] ?: run {
@@ -149,7 +182,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             }
             gameSubscribers.getOrPut(gameId) { CopyOnWriteArraySet() }.add(this)
 
-            gameService.getGameById(gameId)?.let { game ->
+            gameService.getTournamentGameById(gameId)?.let { game ->
                 send(Frame.Text(Json.encodeToString(mapOf("pgn" to game.pgn))))
             }
 

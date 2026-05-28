@@ -10,7 +10,7 @@ object TournamentTable : Table("tournaments"){
     val description = text("description").default("")
     val typeOf = varchar("type_of", 50).default("OPEN")
     val startDate = datetime("start_date").default(LocalDateTime.now())
-    val creatorId = varchar("creator_id", 36)
+    val creatorId = integer("creator_id").references(UserTable.id)
     val accessCode = varchar("access_code", 10)
     val lichessBroadcastId = varchar("lichess_broadcast_id", 255)
     val status = varchar("status", 36).default("NOT_STARTED")

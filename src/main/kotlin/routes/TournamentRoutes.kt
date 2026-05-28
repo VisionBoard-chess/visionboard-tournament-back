@@ -59,8 +59,9 @@ fun Route.tournamentRoutes(service: TournamentService) {
         }
         get("/creator/{creatorId}") {
             val creatorId = call.parameters["creatorId"] ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing creatorId")
+            val creatorIdInt = creatorId.toInt() // estoy hay que adaptarlo para que haga referencia a la tabla de user
             println(">>> GET /tournaments/creator/$creatorId")
-            val tournaments = service.getByCreatorId(creatorId)
+            val tournaments = service.getByCreatorId(creatorIdInt)
             println(">>> Torneos del creador $creatorId: ${tournaments.size}")
             call.respond(HttpStatusCode.OK, tournaments)
         }

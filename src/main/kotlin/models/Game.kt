@@ -38,3 +38,22 @@ data class GameUpdateResponse(
     val pgn: String,
     val roundId: String
 )
+@Serializable
+data class IndividualGameRequest(
+    val whiteName: String,
+    val blackName: String,
+    val pgnHeader: String,
+    val pgnMoves: String = "*",
+    val result: String = "*",
+    val creatorId: Int,
+    val participantId: Int? = null
+)
+@Serializable
+data class IndividualGame(
+    val id: String,
+    val createdAt: String,
+    val white: String,
+    val black: String,
+    val pgn: String,
+    val result: String
+)

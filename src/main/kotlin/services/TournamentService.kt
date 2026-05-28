@@ -70,7 +70,7 @@ class TournamentService(private val repo: TournamentRepository, private val lich
         return repo.getAll().map { toPublicResponse(it) }
     }
 
-    suspend fun getByCreatorId(creatorId: String): List<TournamentResponse> {
+    suspend fun getByCreatorId(creatorId: Int): List<TournamentResponse> {
         return repo.findByCreatorId(creatorId).map { toResponse(it) }
     }
 
