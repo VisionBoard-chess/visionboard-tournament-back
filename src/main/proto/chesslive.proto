@@ -44,7 +44,7 @@ message CreateGameResponse {
 
 // StreamGameImages
 message ImageFrame {
-  string game_id    = 1; // ✅ renombrado de game_name a game_id, más consistente
+  string game_id    = 1; // renombrado de game_name a game_id, más consistente
   bytes  image_data = 2;
   int64  timestamp  = 3;
 }
