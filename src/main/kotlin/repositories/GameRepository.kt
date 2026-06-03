@@ -14,6 +14,7 @@ import com.example.tables.TournamentTable
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.time.LocalDateTime
 
 class GameRepository {
     suspend fun getGamesByRoundId(roundId: String): List<GameResponse> = dbQuery {
@@ -102,6 +103,7 @@ class GameRepository {
             it[gameId] = id
             it[creatorId] = game.creatorId
             it[participantId] = game.participantId
+            it[createdAt] = LocalDateTime.now()
         }
         //tal vez sea mejor poner gameResponse?
 //        GameResponse(
@@ -126,6 +128,7 @@ class GameRepository {
     suspend fun getIndividualGamesByPlayer(playerId: Int): List<IndividualGame> = dbQuery {
         (GameTable innerJoin IndividualGameTable).selectAll()
             .where { (IndividualGameTable.creatorId eq playerId) or (IndividualGameTable.participantId eq playerId) }
+            .orderBy(IndividualGameTable.createdAt, SortOrder.DESC)
             .map { rowToIndividualGame(it) }
     }
 
