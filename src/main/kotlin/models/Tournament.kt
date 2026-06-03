@@ -9,7 +9,7 @@ data class Tournament(
     val description: String,
     val typeOf: String,
     val startDate: LocalDateTime,
-    val creatorId: String,
+    val creatorId: Int,
     val accessCode: String,
     val lichessBroadcastId: String,
     val roundIds: List<String> = emptyList(),
@@ -22,7 +22,7 @@ data class TournamentRequest(
     val description: String = "",
     val typeOf: String,
     val startDate: String,
-    val creatorId: String,
+    val creatorId: Int,
     val roundIds: List<String> = emptyList()
 )
 
@@ -33,7 +33,7 @@ data class TournamentResponse(
     val description: String,
     val typeOf: String,
     val startDate: String,
-    val creatorId: String,
+    val creatorId: Int,
     val accessCode: String,
     val lichessBroadcastId: String,
     val roundIds: List<String>,

@@ -30,7 +30,7 @@ class TournamentRepository {
             .map { rowToTournament(it) }
     }
 
-    suspend fun findByCreatorId(creatorId: String): List<Tournament> = dbQuery {
+    suspend fun findByCreatorId(creatorId: Int): List<Tournament> = dbQuery {
         TournamentTable.selectAll().where { TournamentTable.creatorId eq creatorId }
             .map { rowToTournament(it) }
     }
