@@ -30,7 +30,43 @@ import java.util.concurrent.CopyOnWriteArraySet
  */
 val gameSubscribers = ConcurrentHashMap<String, CopyOnWriteArraySet<kotlinx.coroutines.channels.Channel<String>>>()
 
-fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
+fun Route.publicGameRoutes(gameService: GameService) {
+    route("/games") {
+        get("/{gameId}/sse"){
+            val gameId = call.parameters["gameId"]
+                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing game ID")
+            val game = gameService.getTournamentGameById(gameId)
+                ?: return@get call.respond(HttpStatusCode.NotFound, "Game not found")
+            println(">>> GET /games/$gameId/sse")
+
+            call.response.headers.append("Content-Type", "text/event-stream")
+            call.response.headers.append("Cache-Control", "no-cache")
+            call.response.headers.append("Connection", "keep-alive")
+
+            val channel = kotlinx.coroutines.channels.Channel<String>()
+            gameSubscribers.getOrPut(gameId) { CopyOnWriteArraySet() }.add(channel)
+            println(">>> Cliente suscrito a SSE para juego $gameId")
+
+            call.respondTextWriter(contentType = ContentType.Text.EventStream) {
+                write("data: ${Json.encodeToString(mapOf("type" to "initial_pgn", "pgn" to game.pgn))}\n\n")
+                flush()
+                try {
+                    for (update in channel) {
+                        write("data: $update\n\n")
+                        flush()
+                    }
+                } finally {
+                    gameSubscribers[gameId]?.remove(channel)
+                    channel.close()
+                    println(">>> Cliente desconectado de SSE para juego $gameId")
+                }
+            }
+
+        }
+    }
+}
+
+fun Route.privateGameRoutes(gameService: GameService, roundService: RoundService) {
     route("/games") {
         get("/tournament/{accessCode}") { //este para la conexion con el telefono
             val accessCode = call.parameters["accessCode"]
@@ -105,6 +141,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
         put("/{gameId}/move/add") {
             val gameId = call.parameters["gameId"]
                 ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing game ID")
+            println(">>> PUT /games/$gameId/move/add")
             val body = call.receive<Map<String, String>>()
             val moveSan = body["moveSan"]
                 ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing moveSan")
@@ -112,37 +149,7 @@ fun Route.gameRoutes(gameService: GameService, roundService: RoundService) {
             if (success) call.respond(HttpStatusCode.OK, mapOf("success" to "true"))
             else call.respond(HttpStatusCode.BadRequest, mapOf("success" to "false", "error" to "Move rejected"))
         }
-        get("/{gameId}/sse"){
-            val gameId = call.parameters["gameId"]
-                ?: return@get call.respond(HttpStatusCode.BadRequest, "Missing game ID")
-            val game = gameService.getTournamentGameById(gameId)
-                ?: return@get call.respond(HttpStatusCode.NotFound, "Game not found")
-            println(">>> GET /games/$gameId/sse")
 
-            call.response.headers.append("Content-Type", "text/event-stream")
-            call.response.headers.append("Cache-Control", "no-cache")
-            call.response.headers.append("Connection", "keep-alive")
-
-            val channel = kotlinx.coroutines.channels.Channel<String>()
-            gameSubscribers.getOrPut(gameId) { CopyOnWriteArraySet() }.add(channel)
-            println(">>> Cliente suscrito a SSE para juego $gameId")
-
-            call.respondTextWriter(contentType = ContentType.Text.EventStream) {
-                write("data: ${Json.encodeToString(mapOf("type" to "initial_pgn", "pgn" to game.pgn))}\n\n")
-                flush()
-                try {
-                    for (update in channel) {
-                        write("data: $update\n\n")
-                        flush()
-                    }
-                } finally {
-                    gameSubscribers[gameId]?.remove(channel)
-                    channel.close()
-                    println(">>> Cliente desconectado de SSE para juego $gameId")
-                }
-            }
-
-        }
         get("/user/{userId}"){
             println(">>> GET /games/user/{userId}")
             val userId = call.parameters["userId"]

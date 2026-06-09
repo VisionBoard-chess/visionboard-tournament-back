@@ -26,6 +26,9 @@ kotlin {
 
 dependencies {
 
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+    implementation("io.ktor:ktor-server-auth:$kotlin_version")
+
     implementation("io.grpc:grpc-netty-shaded:1.63.0")
     implementation("io.grpc:grpc-protobuf:1.63.0")
     implementation("io.grpc:grpc-stub:1.63.0")

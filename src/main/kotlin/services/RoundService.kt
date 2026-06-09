@@ -84,4 +84,12 @@ class RoundService(
         startDate = round.startDate?.toString(),
         games = games
     )
+
+    suspend fun hasAnotherActiveRound(tournamentId: String, roundId: String): Boolean {
+        return roundRepo.hasAnotherActiveRound(tournamentId, roundId)
+    }
+
+    suspend fun updateStatus(roundId: String, status: String): Boolean {
+        return roundRepo.updateStatus(roundId, status)
+    }
 }

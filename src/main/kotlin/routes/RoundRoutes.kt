@@ -1,6 +1,7 @@
 package com.example.routes
 
 import com.example.models.RoundRequest
+import com.example.models.UpdateStatusRequest
 import com.example.services.TournamentService
 import com.example.services.RoundService
 
@@ -67,7 +68,29 @@ fun Route.roundRoutes(roundService: RoundService, tournamentService: TournamentS
             println(">>> Ronda encontrada: $round")
             call.respond(HttpStatusCode.OK, round)
         }
-        
+
+        put("/{roundId}/status"){
+            val tournamentId = call.parameters["tournamentId"]
+                ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing tournamentId")
+            val roundId = call.parameters["roundId"]
+                ?: return@put call.respond(HttpStatusCode.BadRequest, "Missing roundId")
+            val request = call.receive<UpdateStatusRequest>()
+
+            if (request.status == "ACTIVE"){
+                val hasActiveRound = roundService.hasAnotherActiveRound(tournamentId, roundId)
+                if (hasActiveRound){
+                    call.respond(HttpStatusCode.Conflict, "Hay otra ronda del torneo activa")
+                    return@put
+                }
+            }
+
+            try{
+                roundService.updateStatus(roundId, request.status)
+                call.respond(HttpStatusCode.OK, mapOf("message" to "Estado cambiado a ${request.status}"))
+            } catch (e: IllegalArgumentException) {
+                call.respond(HttpStatusCode.BadRequest, "Error al actualizar la ronda: ${e.message}")
+            }
+        }
 
         //put para actualizar ronda (status o pgn)
         //tal vez otro get para diferenciar quien puede ver las rondas y tal (solo por creador?)
