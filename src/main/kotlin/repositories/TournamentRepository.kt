@@ -27,6 +27,7 @@ class TournamentRepository {
 
     suspend fun getAll(): List<Tournament> = dbQuery {
         TournamentTable.selectAll()
+            .where(TournamentTable.typeOf eq "open")
             .map { rowToTournament(it) }
     }
 

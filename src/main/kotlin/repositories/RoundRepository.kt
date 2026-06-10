@@ -62,4 +62,16 @@ class RoundRepository {
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
+
+    suspend fun hasAnotherActiveRound(tournamentId: String, roundId: String): Boolean = dbQuery{
+        RoundTable.selectAll()
+            .where {(RoundTable.tournamentId eq tournamentId) and (RoundTable.roundId neq roundId) and (RoundTable.status eq "ACTIVE")}
+            .count() > 0
+    }
+
+    suspend fun updateStatus(roundId: String, status: String): Boolean = dbQuery {
+        RoundTable.update({ RoundTable.roundId eq roundId }){
+            it[RoundTable.status] = status
+        } > 0
+    }
 }

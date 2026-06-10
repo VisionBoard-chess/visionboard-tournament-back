@@ -8,7 +8,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
-fun Route.userRoutes(userService: UserService) {
+
+fun Route.publicUserRoutes(userService: UserService) {
     route("/user") {
         get("/check-nickname") {
             val nickname = call.request.queryParameters["nickname"]
@@ -16,17 +17,22 @@ fun Route.userRoutes(userService: UserService) {
             val exists = userService.nicknameExists(nickname)
             call.respond(if (exists) HttpStatusCode.Conflict else HttpStatusCode.OK)
         }
-        get {
-            println(">>> GET /user")
-            val users = userService.getAllUsers()
-            call.respond(HttpStatusCode.OK, users)
-        }
         post("/register") {
             val request = call.receive<UserRequest>()
             println(">>> POST /user/register")
             val user = userService.create(request)
             println(">>> Usuario registrado: $user")
             call.respond(HttpStatusCode.Created, user)
+        }
+    }
+}
+
+fun Route.protectedUserRoutes(userService: UserService) {
+    route("/user") {
+        get {
+            println(">>> GET /user")
+            val users = userService.getAllUsers()
+            call.respond(HttpStatusCode.OK, users)
         }
         get("/{firebaseUid}"){
             val firebaseUid = call.parameters["firebaseUid"] ?: return@get call.respond(HttpStatusCode.BadRequest)

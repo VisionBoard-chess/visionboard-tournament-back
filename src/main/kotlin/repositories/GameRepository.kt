@@ -20,6 +20,7 @@ class GameRepository {
     suspend fun getGamesByRoundId(roundId: String): List<GameResponse> = dbQuery {
         (GameTable innerJoin TournamentGameTable).selectAll()
             .where { TournamentGameTable.roundId eq roundId }
+            .orderBy(TournamentGameTable.tableNumber to SortOrder.ASC)
             .map { rowToTournamentGame(it) }
     }
 

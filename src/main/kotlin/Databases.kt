@@ -6,12 +6,11 @@ import com.example.repositories.GameRepository
 import com.example.repositories.RoundRepository
 import com.example.repositories.TournamentRepository
 import com.example.repositories.UserRepository
-import com.example.routes.gameRoutes
-import com.example.routes.gameSubscribers
+import com.example.routes.protectedUserRoutes
+import com.example.routes.publicUserRoutes
 import com.example.routes.roundRoutes
 import com.example.services.TournamentService
 import com.example.routes.tournamentRoutes
-import com.example.routes.userRoutes
 import com.example.services.GameService
 import com.example.services.LichessService
 import com.example.services.RoundService
@@ -36,9 +35,13 @@ fun Application.configureDatabases() {
     val userService = UserService(UserRepository())
 
     routing {
-        tournamentRoutes(tournamentService)
-        roundRoutes(roundService, tournamentService)
-        gameRoutes(gameService, roundService)
-        userRoutes(userService)
+        publicUserRoutes(userService)
+        publicGameRoutes(gameService)
+        authenticate(FirebaseAuthKey, "python-api-key") {
+            tournamentRoutes(tournamentService)
+            roundRoutes(roundService, tournamentService)
+            privateGameRoutes(gameService, roundService)
+            protectedUserRoutes(userService)
+        }
     }
 }
