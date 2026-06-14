@@ -17,6 +17,10 @@ import com.example.services.RoundService
 import com.example.services.UserService
 import io.ktor.server.application.*
 import io.ktor.server.routing.*
+import io.ktor.server.auth.authenticate
+import com.example.auth.FirebaseAuthKey
+import com.example.routes.privateGameRoutes
+import com.example.routes.publicGameRoutes
 
 
 fun Application.configureDatabases() {

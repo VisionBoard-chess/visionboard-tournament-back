@@ -68,7 +68,10 @@ class GrpcGameClient(host: String = "localhost", port: Int = 50051) {
         var success = false
         stub.addMoves(requestFlow).collect{response ->
             when{
-                response.hasValidation() -> success = response.validation.success
+                response.hasValidation() -> {
+                    success = response.validation.success
+                    println(">>> [gRPC Client] Respuesta recibida de Python: $response")
+                }
             }
         }
         return success
