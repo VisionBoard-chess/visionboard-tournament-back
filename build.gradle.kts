@@ -11,6 +11,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
 
     id("com.google.protobuf") version "0.9.4"
+    jacoco
 }
 
 group = "com.example"
@@ -56,9 +57,14 @@ dependencies {
 
     implementation("io.ktor:ktor-server-websockets")
     implementation("io.ktor:ktor-server-sse")
+    implementation("io.ktor:ktor-serialization-gson:3.4.0")
 
-    testImplementation("io.ktor:ktor-server-test-host")
+    testImplementation("io.ktor:ktor-server-test-host:$kotlin_version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("io.ktor:ktor-server-content-negotiation:$kotlin_version")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json:$kotlin_version")
+    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk-agent:1.13.12")
 
 }
 
@@ -83,4 +89,43 @@ tasks.named("shadowJar") {
     doFirst {
         javaClass.getMethod("mergeServiceFiles").invoke(this)
     }
+}
+
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(false)
+    }
+
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                include(
+                    "**/services/GameService*",
+                    "**/services/RoundService*",
+                    "**/services/TournamentService*",
+                    "**/routes/**",
+                )
+                exclude(
+                    "**/auth/**",
+                    "**/client/**",
+                    "**/database/**",
+                    "**/models/**",
+                    "**/tables/**",
+                    "**/services/LichessService*",
+                    "**/services/UserService*",
+                    "**/Application*",
+                    "**/Databases*",
+                    "**/HTTP*",
+                    "**/Routing*",
+                    "**/Serialization*",
+                )
+            }
+        })
+    )
 }

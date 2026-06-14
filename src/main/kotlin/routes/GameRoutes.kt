@@ -2,10 +2,8 @@ package com.example.routes
 
 
 import com.example.models.IndividualGameRequest
-import com.example.models.TournamentRequest
 import com.example.services.GameService
 import com.example.services.RoundService
-import com.example.tables.GameTable.gameId
 import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*

@@ -7,8 +7,6 @@ import io.ktor.http.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import kotlin.collections.get
-import kotlin.text.get
 
 /**
  * Configures the endpoints related with the management of the tournaments.
@@ -20,7 +18,7 @@ import kotlin.text.get
  * - `DELETE /tournaments/{tournamentId}` : Deletes a tournament using his ID.
  * - `GET /tournaments/creator/{creatorId}` : Gets all the tournament of a user.
  *
- * @param service Instance of [TournamentService] in charge of business logic and database for tournaments.
+ * @param services Instance of [TournamentService] in charge of business logic and database for tournaments.
  *
  */
 fun Route.tournamentRoutes(service: TournamentService) {
