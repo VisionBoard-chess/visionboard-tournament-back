@@ -10,3 +10,5 @@ postgres:
   password: ${DB_PASSWORD}
 lichess:
   token: ${LICHESS_API_TOKEN}
+secret:
+  key: ${SECRET_KEY}
