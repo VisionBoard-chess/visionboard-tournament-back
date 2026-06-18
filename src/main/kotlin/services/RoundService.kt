@@ -27,7 +27,7 @@ class RoundService(
             roundNumber = request.roundNumber,
             pgn = "", // Placeholder, se actualizará después de crear el round en Lichess
             lichessRoundId = lichessRoundId,
-            status = "NOT_STARTED",
+            status = Status.NOT_STARTED.name,
             startDate = request.startDate?.let { LocalDateTime.parse(it) }
         )
         roundRepo.createRound(round)
@@ -89,7 +89,20 @@ class RoundService(
         return roundRepo.hasAnotherActiveRound(tournamentId, roundId)
     }
 
-    suspend fun updateStatus(roundId: String, status: String): Boolean {
-        return roundRepo.updateStatus(roundId, status)
+    suspend fun updateStatus(roundId: String, tournamentId: String, status: String): Boolean {
+        val statusEnum = Status.valueOf(status)
+        val updated = roundRepo.updateStatus(roundId, statusEnum)
+        if(updated) {
+            val rounds = roundRepo.findByTournamentId(tournamentId)
+            val newTournamentStatus = computeTournamentStatus(rounds.map { it.status })
+            tournamentRepo.updateTournamentStatus(tournamentId, newTournamentStatus)
+        }
+        return updated
+    }
+
+    private fun computeTournamentStatus(statuses: List<String>): Status {
+        if (statuses.isEmpty()) return Status.NOT_STARTED // inicio not_started
+        if (statuses.all { it == "FINISHED" }) return Status.FINISHED // cuando todas las rondas creadas se han finalizado
+        return Status.ACTIVE // si hay al menos una ronda activa o no todas las rondas están finalizadas
     }
 }

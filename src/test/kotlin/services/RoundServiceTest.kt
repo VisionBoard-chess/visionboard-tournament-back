@@ -4,14 +4,14 @@ import com.example.models.GameRequest
 import com.example.models.GameResponse
 import com.example.models.Round
 import com.example.models.RoundRequest
+import com.example.models.Status
 import com.example.models.Tournament
 import com.example.repositories.RoundRepository
 import com.example.repositories.TournamentRepository
-import io.mockk.Runs
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.just
 import io.mockk.mockk
+import junit.framework.TestCase.assertFalse
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -196,5 +196,78 @@ class RoundServiceTest {
         coEvery { roundRepo.updatePGN("r1", "*") } returns false
         service.updatePGN("r1", "*")
         coVerify(exactly = 0) { lichessService.pushRoundPgn(any(), any()) }
+    }
+
+    @Test
+    fun updateStatus_throws_if_invalid_status() = runBlocking {
+        assertFailsWith<IllegalArgumentException> {
+            service.updateStatus("r1", "t1", "INVALID_STATUS")
+        }
+        coVerify(exactly = 0) { roundRepo.updateStatus(any(), any()) }
+    }
+
+    @Test
+    fun updateStatus_does_not_update_tournament_if_round_update_fails() = runBlocking {
+        coEvery { roundRepo.updateStatus("r1", Status.FINISHED) } returns false
+
+        val result = service.updateStatus("r1", "t1", "FINISHED")
+
+        assertFalse(result)
+        coVerify(exactly = 0) { roundRepo.findByTournamentId(any()) }
+        coVerify(exactly = 0) { tournamentRepo.updateTournamentStatus(any(), any()) }
+    }
+
+    @Test
+    fun updateStatus_sets_tournament_to_FINISHED_when_all_rounds_finished() = runBlocking {
+        coEvery { roundRepo.updateStatus("r1", Status.FINISHED) } returns true
+        coEvery { roundRepo.findByTournamentId("t1") } returns listOf(
+            fakeRound().copy(roundId = "r1", status = "FINISHED"),
+            fakeRound().copy(roundId = "r2", status = "FINISHED")
+        )
+        coEvery { tournamentRepo.updateTournamentStatus("t1", Status.FINISHED) } returns true
+
+        val result = service.updateStatus("r1", "t1", "FINISHED")
+
+        assertTrue(result)
+        coVerify(exactly = 1) { tournamentRepo.updateTournamentStatus("t1", Status.FINISHED) }
+    }
+
+    @Test
+    fun updateStatus_sets_tournament_to_ACTIVE_when_mix_of_finished_and_not_started() = runBlocking {
+        coEvery { roundRepo.updateStatus("r1", Status.FINISHED) } returns true
+        coEvery { roundRepo.findByTournamentId("t1") } returns listOf(
+            fakeRound().copy(roundId = "r1", status = "FINISHED"),
+            fakeRound().copy(roundId = "r2", status = "NOT_STARTED")
+        )
+        coEvery { tournamentRepo.updateTournamentStatus("t1", Status.ACTIVE) } returns true
+
+        service.updateStatus("r1", "t1", "FINISHED")
+
+        coVerify(exactly = 1) { tournamentRepo.updateTournamentStatus("t1", Status.ACTIVE) }
+    }
+
+    @Test
+    fun updateStatus_sets_tournament_to_ACTIVE_when_round_is_active() = runBlocking {
+        coEvery { roundRepo.updateStatus("r1", Status.ACTIVE) } returns true
+        coEvery { roundRepo.findByTournamentId("t1") } returns listOf(
+            fakeRound().copy(roundId = "r1", status = "ACTIVE"),
+            fakeRound().copy(roundId = "r2", status = "NOT_STARTED")
+        )
+        coEvery { tournamentRepo.updateTournamentStatus("t1", Status.ACTIVE) } returns true
+
+        service.updateStatus("r1", "t1", "ACTIVE")
+
+        coVerify(exactly = 1) { tournamentRepo.updateTournamentStatus("t1", Status.ACTIVE) }
+    }
+
+    @Test
+    fun updateStatus_sets_tournament_to_NOT_STARTED_when_no_rounds() = runBlocking {
+        coEvery { roundRepo.updateStatus("r1", Status.NOT_STARTED) } returns true
+        coEvery { roundRepo.findByTournamentId("t1") } returns emptyList()
+        coEvery { tournamentRepo.updateTournamentStatus("t1", Status.NOT_STARTED) } returns true
+
+        service.updateStatus("r1", "t1", "NOT_STARTED")
+
+        coVerify(exactly = 1) { tournamentRepo.updateTournamentStatus("t1", Status.NOT_STARTED) }
     }
 }

@@ -1,6 +1,7 @@
 package com.example.repositories
 
 import com.example.models.Tournament
+import com.example.models.Status
 import com.example.tables.TournamentTable
 
 import kotlinx.coroutines.Dispatchers
@@ -61,4 +62,10 @@ class TournamentRepository {
 
     private suspend fun <T> dbQuery(block: suspend () -> T): T =
         newSuspendedTransaction(Dispatchers.IO) { block() }
+
+    suspend fun updateTournamentStatus(tournamentId: String, newTournamentStatus: Status): Boolean = dbQuery{
+        TournamentTable.update({ TournamentTable.id eq tournamentId }) {
+            it[status] = newTournamentStatus.name
+        } > 0
+    }
 }

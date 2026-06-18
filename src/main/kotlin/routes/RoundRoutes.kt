@@ -85,7 +85,7 @@ fun Route.roundRoutes(roundService: RoundService, tournamentService: TournamentS
             }
 
             try{
-                roundService.updateStatus(roundId, request.status)
+                roundService.updateStatus(roundId, tournamentId, request.status)
                 call.respond(HttpStatusCode.OK, mapOf("message" to "Estado cambiado a ${request.status}"))
             } catch (e: IllegalArgumentException) {
                 call.respond(HttpStatusCode.BadRequest, "Error al actualizar la ronda: ${e.message}")

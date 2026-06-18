@@ -174,7 +174,7 @@ class RoundRoutesTest {
     fun put_status_returns200() = testApplication {
         setupApp()
         coEvery { roundService.hasAnotherActiveRound("t1", "r1") } returns false
-        coEvery { roundService.updateStatus("r1", "ACTIVE") } returns true
+        coEvery { roundService.updateStatus("r1", "t1","ACTIVE") } returns true
         val response = client.put("/tournaments/t1/rounds/r1/status") {
             header("Authorization", "Bearer valid_token")
             contentType(ContentType.Application.Json)
