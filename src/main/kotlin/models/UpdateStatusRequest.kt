@@ -7,3 +7,9 @@ import kotlinx.serialization.Serializable
 data class UpdateStatusRequest(
     val status: String
 )
+
+enum class Status {
+    NOT_STARTED,
+    ACTIVE,
+    FINISHED
+}

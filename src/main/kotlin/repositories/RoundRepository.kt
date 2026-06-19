@@ -2,6 +2,7 @@ package com.example.repositories
 
 import com.example.tables.RoundTable
 import com.example.models.Round
+import com.example.models.Status
 import kotlinx.coroutines.Dispatchers
 
 import org.jetbrains.exposed.sql.*
@@ -69,9 +70,9 @@ class RoundRepository {
             .count() > 0
     }
 
-    suspend fun updateStatus(roundId: String, status: String): Boolean = dbQuery {
+    suspend fun updateStatus(roundId: String, status: Status): Boolean = dbQuery {
         RoundTable.update({ RoundTable.roundId eq roundId }){
-            it[RoundTable.status] = status
+            it[RoundTable.status] = status.name
         } > 0
     }
 }

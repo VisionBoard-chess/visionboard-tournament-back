@@ -1,54 +1,43 @@
-# VisualBoard Tournament Server
+# VisionBoard API Rest Server
+### (VisionBoard Administration Service)
 
-This is a backend server for the VisualBoard Tournament application. It provides RESTful APIs to manage tournaments, and matches. 
+This is a backend server for the VisionBoard system. It provides RESTful APIs to manage tournaments, rounds, matches and users. 
 The server is built using Ktor, a Kotlin framework for building asynchronous servers.
 
 The server uses a PostgreSQL database to store data, and the Exposed library to interact with the database. 
 The server also includes CORS support to allow cross-origin requests from the frontend application.
 
-## For the creation of this project, we used the following Ktor features:
+It also includes a set of unit tests to ensure the correctness of the APIs and services.
 
-This project was created using the [Ktor Project Generator](https://start.ktor.io).
+This API also integrates with external services such as Lichess.org or Firebase. Lichess to broadcast the tournaments of VisionBoard and Firebase to manage the authentication of users.
 
-Here are some useful links to get you started:
+This server has also a communication layer as a client using gRPC to communicate with the VisionBoard Detection Service, which is responsible for detecting the moves of the players in the tournaments. This connection is capable of editing and adding moves to the matches of the tournaments.
 
-- [Ktor Documentation](https://ktor.io/docs/home.html)
-- [Ktor GitHub page](https://github.com/ktorio/ktor)
-- The [Ktor Slack chat](https://app.slack.com/client/T09229ZC6/C0A974TJ9). You'll need
-  to [request an invite](https://surveys.jetbrains.com/s3/kotlin-slack-sign-up) to join.
+The server has also been configured to run in a Docker container, making it easy to deploy and run in different environments.
 
-## Features
+### Features
+- RESTful APIs for managing tournaments, rounds, matches and users.
+- Integration with Lichess.org for broadcasting tournaments.
+- Integration with Firebase for user authentication.
+- gRPC client for communicating with the VisionBoard Detection Service.
+- CORS support for cross-origin requests.
+- Unit tests for ensuring the correctness of the APIs and services.
+- Docker support for easy deployment and running in different environments.
 
-Here's a list of features included in this project:
+### Installation
+To run the VisionBoard API Rest Server, you need to have Docker installed on your machine.
 
-| Name                                                                   | Description                                                                        |
-| ------------------------------------------------------------------------|------------------------------------------------------------------------------------ |
-| [Routing](https://start.ktor.io/p/routing)                             | Provides a structured routing DSL                                                  |
-| [Content Negotiation](https://start.ktor.io/p/content-negotiation)     | Provides automatic content conversion according to Content-Type and Accept headers |
-| [kotlinx.serialization](https://start.ktor.io/p/kotlinx-serialization) | Handles JSON serialization using kotlinx.serialization library                     |
-| [Status Pages](https://start.ktor.io/p/status-pages)                   | Provides exception handling for routes                                             |
-| [Postgres](https://start.ktor.io/p/postgres)                           | Adds Postgres database to your application                                         |
-| [Exposed](https://start.ktor.io/p/exposed)                             | Adds Exposed database to your application                                          |
-| [CORS](https://start.ktor.io/p/cors)                                   | Enables Cross-Origin Resource Sharing (CORS)                                       |
+Once you have Docker installed, you need to get this repository:
 
-## Building & Running
-
-To build or run the project, use one of the following tasks:
-
-| Task                                    | Description                                                          |
-| -----------------------------------------|---------------------------------------------------------------------- |
-| `./gradlew test`                        | Run the tests                                                        |
-| `./gradlew build`                       | Build everything                                                     |
-| `./gradlew buildFatJar`                 | Build an executable JAR of the server with all dependencies included |
-| `./gradlew buildImage`                  | Build the docker image to use with the fat JAR                       |
-| `./gradlew publishImageToLocalRegistry` | Publish the docker image locally                                     |
-| `./gradlew run`                         | Run the server                                                       |
-| `./gradlew runDocker`                   | Run using the local docker image                                     |
-
-If the server starts successfully, you'll see the following output:
-
+```bash
+git clone repo_url
 ```
-2024-12-04 14:32:45.584 [main] INFO  Application - Application started in 0.303 seconds.
-2024-12-04 14:32:45.682 [main] INFO  Application - Responding at http://0.0.0.0:8080
+And then, get the serviceAccountKey.json file from the Firebase project and place it in the root directory of the project.
+
+Then, you can build and run the Docker container using the following command:
+
+```bash
+docker build -t visionboard-api .
+docker run -d --network host --name visionboard-api -e DB_URL="db_url" -e DB_USER="db_username" -e DB_PASSWORD="db_password" -e LICHESS_API_TOKEN="api_token_of_lichess" -e SECRET_KEY="secret_key_autentication_of_detection_service" visionboard-api 
 ```
 
