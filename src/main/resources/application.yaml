@@ -1,0 +1,14 @@
+ktor:
+  application:
+    modules:
+      - com.example.ApplicationKt.module
+  deployment:
+    port: 8080
+postgres:
+  url: ${DB_URL}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+lichess:
+  token: ${LICHESS_API_TOKEN}
+secret:
+  key: ${SECRET_KEY}
